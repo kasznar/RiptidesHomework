@@ -8,13 +8,37 @@ import { URLParams } from "../../shared/URLParams.ts";
 const GET_USER_REPOS = gql`
   query GetUserRepos($login: String!) {
     user(login: $login) {
-      repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {
+      repositories(
+        first: 10
+        orderBy: { field: UPDATED_AT, direction: DESC }
+        ownerAffiliations: [OWNER]
+      ) {
         nodes {
           name
           description
           url
+          isFork
           updatedAt
           stargazerCount
+          issues {
+            totalCount
+          }
+          pullRequests {
+            totalCount
+          }
+          defaultBranchRef {
+            target {
+              ... on Commit {
+                history(first: 1) {
+                  edges {
+                    node {
+                      committedDate
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -31,7 +55,7 @@ const RepositoryList = (props: RepositoryListProps) => {
   const { loading, error, data } = props;
 
   if (loading) return <p>Loading...</p>;
-  // todo: check alma
+  // todo:  alma is a organization, not listed
   if (data?.user === null) return <p>No user with this username</p>;
   if (error) return <p>Error : {error.message}</p>;
   if (data?.user?.repositories.nodes?.length === 0)
@@ -40,7 +64,16 @@ const RepositoryList = (props: RepositoryListProps) => {
   return (
     <>
       {data?.user?.repositories.nodes?.map((repo) => (
-        <p key={repo?.name}>{repo?.name}</p>
+        <div key={repo?.name}>
+          <a href={repo?.url}>Name: {repo?.name}</a>
+          <span>Desc: {repo?.description}</span>
+          <span>Forked?: {String(repo?.isFork)}</span>
+          {/*<span>
+            Last commit date: ${repo?.defaultBranchRef?.target?.history}
+          </span>*/}
+          <span>Issue Count: ${repo?.issues.totalCount}</span>
+          <span>Pull Request count: ${repo?.pullRequests.totalCount}</span>
+        </div>
       ))}
     </>
   );
