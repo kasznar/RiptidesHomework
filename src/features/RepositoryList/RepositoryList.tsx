@@ -13,14 +13,16 @@ export const RepositoryList = (props: RepositoryListProps) => {
       <List>
         {props.data?.user?.repositories?.nodes?.map((repo) => (
           <ListItem key={repo?.name}>
-            <a href={repo?.url}>Name: {repo?.name}</a>
-            <span>Desc: {repo?.description}</span>
-            <span>Forked?: {String(repo?.isFork)}</span>
+            <ListItemHeader>
+              <a href={repo?.url}>Name: {repo?.name}</a>
+              <span>{repo?.description}</span>
+            </ListItemHeader>
+            {repo?.isFork ?? <span>forked</span>}
             {/*<span>
             Last commit date: ${repo?.defaultBranchRef?.target?.history}
           </span>*/}
-            <span>Issue Count: ${repo?.issues.totalCount}</span>
-            <span>Pull Request count: ${repo?.pullRequests.totalCount}</span>
+            <span>Issues ${repo?.issues.totalCount}</span>
+            <span>Pull Requests ${repo?.pullRequests.totalCount}</span>
           </ListItem>
         ))}
       </List>
@@ -33,6 +35,13 @@ const ListItem = styled.div`
   display: flex;
   flex-direction: column;
   padding: 20px;
+`;
+
+const ListItemHeader = styled.div`
+  flex-grow: 1;
+  flex-direction: column;
+  display: flex;
+  margin-bottom: 10px;
 `;
 
 const List = styled.div`
