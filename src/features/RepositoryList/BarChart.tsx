@@ -19,7 +19,10 @@ interface BarChartProps {
 }
 
 export function BarChart(props: BarChartProps) {
-  const data = props.data;
+  const data = props.data.map((d) => ({
+    ...d,
+    weekStart: new Date(d.weekStart),
+  }));
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -39,12 +42,15 @@ export function BarChart(props: BarChartProps) {
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
+    const barWidth = innerWidth / data.length;
+
     // Create scales
     const x = d3
-      .scaleBand()
-      .domain(data.map((item) => item.weekStart))
-      .range([0, innerWidth])
-      .padding(0.1);
+      .scaleTime()
+      .domain(d3.extent(data, (d) => d.weekStart) as [Date, Date])
+      // .domain(data.map((item) => item.weekStart))
+      .range([0, innerWidth]);
+    // .padding(0.1);
 
     const y = d3
       .scaleLinear()
@@ -70,7 +76,7 @@ export function BarChart(props: BarChartProps) {
       .attr("class", "bar")
       .attr("x", (d) => x(d.weekStart) ?? null)
       .attr("y", (d) => y(d.totalContributions))
-      .attr("width", x.bandwidth())
+      .attr("width", barWidth)
       .attr("height", (d) => innerHeight - y(d.totalContributions))
       .attr("fill", "steelblue")
       .on("mouseenter", (event, d) => {
@@ -120,7 +126,7 @@ export function BarChart(props: BarChartProps) {
             return y(dd.value[1]);
           })
           .attr("height", (dd) => y(dd.value[0]) - y(dd.value[1]))
-          .attr("width", x.bandwidth)
+          .attr("width", barWidth)
           .on("mouseleave", () => {
             d3.selectAll(".stack").remove();
             d3.select(event.target).style("visibility", "visible");
@@ -130,7 +136,13 @@ export function BarChart(props: BarChartProps) {
     // Add x-axis
     g.append("g")
       .attr("transform", `translate(0,${innerHeight})`)
-      .call(d3.axisBottom(x));
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(d3.timeMonth.every(1)) // one tick per month
+          .tickFormat(d3.timeFormat("%b")), // short month names
+        0,
+      );
 
     // Add y-axis
     g.append("g").call(d3.axisLeft(y));
