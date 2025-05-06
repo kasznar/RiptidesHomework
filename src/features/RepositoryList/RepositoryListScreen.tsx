@@ -1,7 +1,6 @@
 import { gql, useQuery } from "@apollo/client";
 import { GetUserReposQuery } from "../../api";
 import { Input } from "../../shared/ui-kit/Input.tsx";
-import { ContributionChart } from "./ContributionChart.tsx";
 import { useEffect, useState } from "react";
 import { URLParams } from "../../shared/URLParams.ts";
 import { useDebounce } from "../../shared/useDebounce.ts";
@@ -9,6 +8,7 @@ import { RepositoryList } from "./RepositoryList.tsx";
 import { fontH1, H1 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
 import { Screen } from "../../shared/ui-kit/Screen.tsx";
+import { ContributionChart } from "./ContributionChart.tsx";
 
 const GET_USER_REPOS = gql`
   query GetUserRepos($login: String!) {

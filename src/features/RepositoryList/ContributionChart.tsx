@@ -1,14 +1,7 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
 import styled from "styled-components";
 import { GetUserReposQuery } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
+import { BarChart } from "./BarChart.tsx";
 
 interface ContributionChartProps {
   data?: GetUserReposQuery;
@@ -44,28 +37,18 @@ export const ContributionChart = (props: ContributionChartProps) => {
   return (
     <Container>
       <Title>Contributions in the last year</Title>
-      <StyledChartContainer width="100%" height={300}>
-        <BarChart data={data}>
-          <XAxis
-            dataKey="weekStart"
-            tickFormatter={(date) => new Date(date).toLocaleDateString()}
-          />
-          <YAxis />
-          <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-
-          {/*<Tooltip />*/}
-          <Bar dataKey="totalContributions" fill="#9176ef" />
-        </BarChart>
-      </StyledChartContainer>
+      <BarChart
+        data={data}
+        getBreakDown={() => ({
+          commits: 1,
+          issues: 1,
+          pullRequests: 2,
+          pullRequestReviews: 1,
+        })}
+      />
     </Container>
   );
 };
-
-const StyledChartContainer = styled(ResponsiveContainer)`
-  width: 100%;
-  height: 300px;
-  margin-left: -30px;
-`;
 
 const Container = styled.div`
   background-color: #130f25;
