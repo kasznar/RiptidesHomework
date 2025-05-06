@@ -14,15 +14,15 @@ export const RepositoryList = (props: RepositoryListProps) => {
         {props.data?.user?.repositories?.nodes?.map((repo) => (
           <ListItem key={repo?.name}>
             <ListItemHeader>
-              <a href={repo?.url}>Name: {repo?.name}</a>
+              <Title href={repo?.url}>{repo?.name}</Title>
               <span>{repo?.description}</span>
             </ListItemHeader>
             {repo?.isFork ?? <span>forked</span>}
             {/*<span>
             Last commit date: ${repo?.defaultBranchRef?.target?.history}
           </span>*/}
-            <span>Issues ${repo?.issues.totalCount}</span>
-            <span>Pull Requests ${repo?.pullRequests.totalCount}</span>
+            <span>Issues {repo?.issues.totalCount}</span>
+            <span>Pull Requests {repo?.pullRequests.totalCount}</span>
           </ListItem>
         ))}
       </List>
@@ -48,4 +48,11 @@ const List = styled.div`
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   grid-gap: 20px;
+`;
+
+const Title = styled.a`
+  text-decoration: none;
+  color: rgb(62, 67, 78);
+  font-weight: 500;
+  font-size: 1.2rem;
 `;

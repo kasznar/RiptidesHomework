@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { URLParams } from "../../shared/URLParams.ts";
 import { useDebounce } from "../../shared/useDebounce.ts";
 import { RepositoryList } from "./RepositoryList.tsx";
-import { fontH1, H1 } from "../../shared/ui-kit/Typography.tsx";
+import { H1, H2 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
 import { Screen } from "../../shared/ui-kit/Screen.tsx";
 import { ContributionChart } from "./ContributionChart.tsx";
@@ -88,12 +88,12 @@ export const RepositoryListScreen = () => {
   });
 
   const renderContent = () => {
-    if (!user) return <p>Search for a user</p>;
-    if (query.loading) return <p>Loading...</p>;
-    if (query.data?.user === null) return <p>No user with this username</p>;
-    if (query.error) return <p>Something went wrong</p>;
+    if (!user) return <H2>Search for a user</H2>;
+    if (query.loading) return <H2>Loading...</H2>;
+    if (query.data?.user === null) return <H2>No user with this username</H2>;
+    if (query.error) return <H2>Something went wrong</H2>;
     if (query.data?.user?.repositories.nodes?.length === 0)
-      return <p>User doesn't have any public repositories yet.</p>;
+      return <H2>User doesn't have any public repositories yet.</H2>;
     if (!query.data || !query.data.user) return null;
 
     const weeks =
@@ -111,8 +111,7 @@ export const RepositoryListScreen = () => {
     <Screen>
       <Header>
         <H1>GitHub Repositories & Contributions</H1>
-        <SearchTitle>Search</SearchTitle>
-        <Input value={user} onChange={setUser} />
+        <Input value={user} onChange={setUser} placeholder="Enter username" />
       </Header>
       {renderContent()}
     </Screen>
@@ -123,11 +122,4 @@ const Header = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
-`;
-
-const SearchTitle = styled.span`
-  ${fontH1};
-  flex-grow: 1;
-  text-align: end;
-  padding: 10px;
 `;

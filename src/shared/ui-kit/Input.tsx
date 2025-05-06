@@ -4,6 +4,7 @@ import styled from "styled-components";
 interface InputProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder: string;
 }
 
 export const Input = (props: InputProps) => {
@@ -11,7 +12,13 @@ export const Input = (props: InputProps) => {
     props.onChange(event.target.value);
   };
 
-  return <StyledInput value={props.value} onChange={handleChange} />;
+  return (
+    <StyledInput
+      value={props.value}
+      onChange={handleChange}
+      placeholder={props.placeholder}
+    />
+  );
 };
 
 const StyledInput = styled.input`
@@ -22,4 +29,5 @@ const StyledInput = styled.input`
   border-radius: 0;
   border: none;
   min-width: 300px;
+  font-size: 1.5rem;
 `;
