@@ -87,14 +87,25 @@ export const RepositoryListScreen = () => {
     errorPolicy: "all",
   });
 
-  /*
-  if (query.loading) return <p>Loading...</p>;
-  // todo:  alma is a organization, not listed
-  if (query.data?.user === null) return <p>No user with this username</p>;
-  if (query.error) return <p>Error : {query.error.message}</p>;
-  if (query.data?.user?.repositories.nodes?.length === 0)
-    return <p>User doesn't have any public repositories yet.</p>;
-   */
+  const renderContent = () => {
+    if (!user) return <p>Search for a user</p>;
+    if (query.loading) return <p>Loading...</p>;
+    if (query.data?.user === null) return <p>No user with this username</p>;
+    if (query.error) return <p>Something went wrong</p>;
+    if (query.data?.user?.repositories.nodes?.length === 0)
+      return <p>User doesn't have any public repositories yet.</p>;
+    if (!query.data || !query.data.user) return null;
+
+    const weeks =
+      query.data.user.contributionsCollection.contributionCalendar.weeks;
+
+    return (
+      <>
+        <ContributionChart data={weeks} />
+        <RepositoryList {...query} />
+      </>
+    );
+  };
 
   return (
     <Screen>
@@ -103,8 +114,7 @@ export const RepositoryListScreen = () => {
         <SearchTitle>Search</SearchTitle>
         <Input value={user} onChange={setUser} />
       </Header>
-      <ContributionChart {...query} />
-      <RepositoryList {...query} />
+      {renderContent()}
     </Screen>
   );
 };

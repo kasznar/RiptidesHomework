@@ -9,11 +9,14 @@ interface Breakdown {
   pullRequestReviews: number;
 }
 
+export interface WeeklyContributions {
+  weekStart: string;
+  weekEnd: string;
+  totalContributions: number;
+}
+
 interface BarChartProps {
-  data: {
-    weekStart: string;
-    totalContributions: number;
-  }[];
+  data: WeeklyContributions[];
   getBreakDown: () => Breakdown;
 }
 

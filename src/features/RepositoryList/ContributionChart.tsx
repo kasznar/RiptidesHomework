@@ -1,11 +1,33 @@
 import styled from "styled-components";
 import { GetUserReposQuery } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
-import { BarChart } from "./BarChart.tsx";
+import { BarChart, WeeklyContributions } from "./BarChart.tsx";
 
-interface ContributionChartProps {
-  data?: GetUserReposQuery;
-}
+/*
+import { gql } from "@apollo/client";
+
+const GET_USER_CONTRIBUTIONS = gql`
+  query ($username: String!, $from: DateTime!, $to: DateTime!) {
+    user(login: $username) {
+      contributionsCollection(from: $from, to: $to) {
+        commitContributionsByRepository(maxRepositories: 100) {
+          contributions {
+            totalCount
+          }
+        }
+        issueContributions {
+          totalCount
+        }
+        pullRequestContributions {
+          totalCount
+        }
+        pullRequestReviewContributions {
+          totalCount
+        }
+      }
+    }
+  }
+`;*/
 
 type Week = NonNullable<
   NonNullable<
@@ -13,39 +35,56 @@ type Week = NonNullable<
   >["contributionsCollection"]["contributionCalendar"]["weeks"]
 >[number];
 
-const transformWeeklyData = (weeks: Week[]) => {
+interface ContributionChartProps {
+  data: Week[];
+}
+
+const sumWeeklyData = (weeks: Week[]): WeeklyContributions[] => {
   return weeks.map((week) => {
     const total = week.contributionDays.reduce(
       (sum, day) => sum + day.contributionCount,
       0,
     );
+
     return {
       weekStart: week.contributionDays[0].date,
+      weekEnd: week.contributionDays[week.contributionDays.length - 1].date,
       totalContributions: total,
     };
   });
 };
 
-export const ContributionChart = (props: ContributionChartProps) => {
-  if (!props.data?.user?.contributionsCollection.contributionCalendar.weeks)
-    return null;
-
-  const data = transformWeeklyData(
-    props.data?.user?.contributionsCollection.contributionCalendar.weeks,
+const sumYearlyData = (contributions: WeeklyContributions[]) =>
+  contributions.reduce(
+    (accumulator, current) => accumulator + current.totalContributions,
+    0,
   );
+
+export const ContributionChart = (props: ContributionChartProps) => {
+  const data = sumWeeklyData(props.data);
+  const yearlySum = sumYearlyData(data);
 
   return (
     <Container>
-      <Title>Contributions in the last year</Title>
-      <BarChart
-        data={data}
-        getBreakDown={() => ({
-          commits: 1,
-          issues: 1,
-          pullRequests: 2,
-          pullRequestReviews: 1,
-        })}
-      />
+      {yearlySum === 0 ? (
+        <Title>
+          This doesn't have any public contributions for the past year
+        </Title>
+      ) : (
+        <>
+          <Title>Contributions in the last year</Title>
+
+          <BarChart
+            data={data}
+            getBreakDown={() => ({
+              commits: 1,
+              issues: 1,
+              pullRequests: 2,
+              pullRequestReviews: 1,
+            })}
+          />
+        </>
+      )}
     </Container>
   );
 };
