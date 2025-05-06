@@ -14,10 +14,10 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n    query GetUserRepos($login: String!) {\n        user(login: $login) {\n            repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n                nodes {\n                    name\n                    description\n                    url\n                    updatedAt\n                    stargazerCount\n                }\n            }\n        }\n    }\n": typeof types.GetUserReposDocument,
+    "\n  query GetUserRepos($login: String!) {\n    user(login: $login) {\n      repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n        nodes {\n          name\n          description\n          url\n          updatedAt\n          stargazerCount\n        }\n      }\n    }\n  }\n": typeof types.GetUserReposDocument,
 };
 const documents: Documents = {
-    "\n    query GetUserRepos($login: String!) {\n        user(login: $login) {\n            repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n                nodes {\n                    name\n                    description\n                    url\n                    updatedAt\n                    stargazerCount\n                }\n            }\n        }\n    }\n": types.GetUserReposDocument,
+    "\n  query GetUserRepos($login: String!) {\n    user(login: $login) {\n      repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n        nodes {\n          name\n          description\n          url\n          updatedAt\n          stargazerCount\n        }\n      }\n    }\n  }\n": types.GetUserReposDocument,
 };
 
 /**
@@ -37,7 +37,7 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n    query GetUserRepos($login: String!) {\n        user(login: $login) {\n            repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n                nodes {\n                    name\n                    description\n                    url\n                    updatedAt\n                    stargazerCount\n                }\n            }\n        }\n    }\n"): (typeof documents)["\n    query GetUserRepos($login: String!) {\n        user(login: $login) {\n            repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n                nodes {\n                    name\n                    description\n                    url\n                    updatedAt\n                    stargazerCount\n                }\n            }\n        }\n    }\n"];
+export function gql(source: "\n  query GetUserRepos($login: String!) {\n    user(login: $login) {\n      repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n        nodes {\n          name\n          description\n          url\n          updatedAt\n          stargazerCount\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetUserRepos($login: String!) {\n    user(login: $login) {\n      repositories(first: 10, orderBy: { field: UPDATED_AT, direction: DESC }) {\n        nodes {\n          name\n          description\n          url\n          updatedAt\n          stargazerCount\n        }\n      }\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};
