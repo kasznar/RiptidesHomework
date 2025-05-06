@@ -11,13 +11,17 @@ interface Breakdown {
 
 export interface WeeklyContributions {
   weekStart: string;
+  weekStartDate?: Date;
   weekEnd: string;
+  weekEndDate?: Date;
   totalContributions: number;
 }
 
 interface BarChartProps {
   data: WeeklyContributions[];
-  getBreakDown: () => Breakdown;
+  getBreakDown: (
+    weeklyContributions: WeeklyContributions,
+  ) => Promise<Breakdown>;
 }
 
 interface Vector {
@@ -27,12 +31,11 @@ interface Vector {
 
 const drawChart = (
   svgRef: SVGSVGElement,
-  data: {
-    weekStart: Date;
-    totalContributions: number;
-  }[],
+  data: WeeklyContributions[],
   dimensions: Vector,
-  getBreakDown: () => Breakdown,
+  getBreakDown: (
+    weeklyContributions: WeeklyContributions,
+  ) => Promise<Breakdown>,
 ) => {
   d3.select(svgRef).selectAll("*").remove();
 
@@ -46,7 +49,7 @@ const drawChart = (
 
   const x = d3
     .scaleTime()
-    .domain(d3.extent(data, (d) => d.weekStart) as [Date, Date])
+    .domain(d3.extent(data, (d) => d.weekStartDate) as [Date, Date])
     .range([0, innerWidth]);
 
   const y = d3
@@ -65,13 +68,13 @@ const drawChart = (
     .enter()
     .append("rect")
     .attr("class", "bar")
-    .attr("x", (d) => x(d.weekStart) ?? null)
+    .attr("x", (d) => x(d.weekStartDate!) ?? null)
     .attr("y", (d) => y(d.totalContributions))
     .attr("width", barWidth)
     .attr("height", (d) => innerHeight - y(d.totalContributions))
     .attr("fill", "steelblue")
-    .on("mouseenter", (event, d) => {
-      const breakdown = getBreakDown();
+    .on("mouseenter", async (event, d) => {
+      const breakdown = await getBreakDown(d);
 
       const series: Array<{ key: string; value: [number, number] }> = [];
 
@@ -90,10 +93,10 @@ const drawChart = (
       d3.select(event.target).style("visibility", "hidden");
 
       const color = {
-        commits: "#1f77b4",
-        issues: "#ff7f0e",
-        pullRequests: "#2ca02c",
-        pullRequestReviews: "red",
+        commits: "#fffe78",
+        issues: "#ff9d42",
+        pullRequests: "#52ff52",
+        pullRequestReviews: "#d34f8c",
       };
 
       g.selectAll(".stack")
@@ -101,7 +104,7 @@ const drawChart = (
         .enter()
         .append("rect")
         .attr("class", "stack")
-        .attr("x", x(d.weekStart) ?? null)
+        .attr("x", x(d.weekStartDate!) ?? null)
         // @ts-expect-error key type
         .attr("fill", (dd) => color[dd.key])
         .attr("y", (dd) => y(dd.value[1]))
@@ -130,7 +133,8 @@ const drawChart = (
 export function BarChart(props: BarChartProps) {
   const data = props.data.map((d) => ({
     ...d,
-    weekStart: new Date(d.weekStart),
+    weekStartDate: new Date(d.weekStart),
+    weekEndDate: new Date(d.weekEnd),
   }));
 
   const svgRef = useRef<SVGSVGElement | null>(null);

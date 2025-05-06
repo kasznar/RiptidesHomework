@@ -1,20 +1,23 @@
 import styled from "styled-components";
-import { GetUserReposQuery } from "../../api";
+import {
+  client,
+  GetUserContributionsQuery,
+  GetUserContributionsQueryVariables,
+  GetUserReposQuery,
+} from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
 import { BarChart, WeeklyContributions } from "./BarChart.tsx";
 
-/*
 import { gql } from "@apollo/client";
 
 const GET_USER_CONTRIBUTIONS = gql`
-  query ($username: String!, $from: DateTime!, $to: DateTime!) {
+  query GetUserContributions(
+    $username: String!
+    $from: DateTime!
+    $to: DateTime!
+  ) {
     user(login: $username) {
       contributionsCollection(from: $from, to: $to) {
-        commitContributionsByRepository(maxRepositories: 100) {
-          contributions {
-            totalCount
-          }
-        }
         issueContributions {
           totalCount
         }
@@ -27,7 +30,7 @@ const GET_USER_CONTRIBUTIONS = gql`
       }
     }
   }
-`;*/
+`;
 
 type Week = NonNullable<
   NonNullable<
@@ -37,6 +40,7 @@ type Week = NonNullable<
 
 interface ContributionChartProps {
   data: Week[];
+  username: string;
 }
 
 const sumWeeklyData = (weeks: Week[]): WeeklyContributions[] => {
@@ -64,6 +68,43 @@ export const ContributionChart = (props: ContributionChartProps) => {
   const data = sumWeeklyData(props.data);
   const yearlySum = sumYearlyData(data);
 
+  const fetchBreakdown = async (weeklyContributions: WeeklyContributions) => {
+    const toEndOfDay = new Date(weeklyContributions.weekEnd);
+    toEndOfDay.setUTCHours(23, 59, 59, 999);
+
+    const result = await client.query<
+      GetUserContributionsQuery,
+      GetUserContributionsQueryVariables
+    >({
+      query: GET_USER_CONTRIBUTIONS,
+      variables: {
+        from: weeklyContributions.weekStartDate,
+        to: toEndOfDay,
+        username: props.username,
+      },
+    });
+
+    const contributionsCollection = result.data.user?.contributionsCollection;
+
+    const issues = contributionsCollection?.issueContributions.totalCount ?? 0;
+    const pullRequests =
+      contributionsCollection?.pullRequestContributions.totalCount ?? 0;
+    const pullRequestReviews =
+      contributionsCollection?.pullRequestReviewContributions.totalCount ?? 0;
+    const commits =
+      weeklyContributions.totalContributions -
+      pullRequests -
+      pullRequestReviews -
+      issues;
+
+    return {
+      commits,
+      issues,
+      pullRequests,
+      pullRequestReviews,
+    };
+  };
+
   return (
     <Container>
       {yearlySum === 0 ? (
@@ -74,15 +115,7 @@ export const ContributionChart = (props: ContributionChartProps) => {
         <>
           <Title>Contributions in the last year</Title>
 
-          <BarChart
-            data={data}
-            getBreakDown={() => ({
-              commits: 1,
-              issues: 1,
-              pullRequests: 2,
-              pullRequestReviews: 1,
-            })}
-          />
+          <BarChart data={data} getBreakDown={fetchBreakdown} />
         </>
       )}
     </Container>

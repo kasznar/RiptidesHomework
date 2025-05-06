@@ -101,7 +101,7 @@ export const RepositoryListScreen = () => {
 
     return (
       <>
-        <ContributionChart data={weeks} />
+        <ContributionChart data={weeks} username={user} />
         <RepositoryList {...query} />
       </>
     );
