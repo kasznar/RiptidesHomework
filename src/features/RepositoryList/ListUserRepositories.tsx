@@ -1,5 +1,5 @@
 import { useQuery, gql, ApolloError } from "@apollo/client";
-import { GetUserReposQuery } from "../../__generated__/graphql.ts";
+import { GetUserReposQuery } from "../../api";
 import { useEffect, useState } from "react";
 import { Input } from "../../shared/ui-kit/Input.tsx";
 import { useDebounce } from "../../shared/useDebounce.ts";
