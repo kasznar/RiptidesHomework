@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import { URLParams } from "../../shared/URLParams.ts";
 import { useDebounce } from "../../shared/useDebounce.ts";
 import { RepositoryList } from "./RepositoryList.tsx";
-import { H1 } from "../../shared/ui-kit/Typography.tsx";
+import { fontH1, H1 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
+import { Screen } from "../../shared/ui-kit/Screen.tsx";
 
 const GET_USER_REPOS = gql`
   query GetUserRepos($login: String!) {
@@ -96,14 +97,15 @@ export const RepositoryListScreen = () => {
    */
 
   return (
-    <>
+    <Screen>
       <Header>
         <H1>GitHub Repositories & Contributions</H1>
+        <SearchTitle>Search</SearchTitle>
         <Input value={user} onChange={setUser} />
       </Header>
       <ContributionChart {...query} />
       <RepositoryList {...query} />
-    </>
+    </Screen>
   );
 };
 
@@ -111,4 +113,11 @@ const Header = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
+`;
+
+const SearchTitle = styled.span`
+  ${fontH1};
+  flex-grow: 1;
+  text-align: end;
+  padding: 10px;
 `;
