@@ -41,13 +41,10 @@ const drawChart = (
 
   const barWidth = innerWidth / data.length;
 
-  // Create scales
   const x = d3
     .scaleTime()
     .domain(d3.extent(data, (d) => d.weekStart) as [Date, Date])
-    // .domain(data.map((item) => item.weekStart))
     .range([0, innerWidth]);
-  // .padding(0.1);
 
   const y = d3
     .scaleLinear()
@@ -78,6 +75,7 @@ const drawChart = (
       let last = 0;
 
       for (const breakdownKey in breakdown) {
+        // @ts-expect-error key type
         const count = breakdown[breakdownKey];
         const top = count + last;
 
@@ -85,10 +83,6 @@ const drawChart = (
 
         last = top;
       }
-
-      console.log(series);
-
-      console.log(event, d);
 
       d3.select(event.target).style("visibility", "hidden");
 
@@ -105,11 +99,9 @@ const drawChart = (
         .append("rect")
         .attr("class", "stack")
         .attr("x", x(d.weekStart) ?? null)
+        // @ts-expect-error key type
         .attr("fill", (dd) => color[dd.key])
-        .attr("y", (dd) => {
-          console.log("attr Y", dd);
-          return y(dd.value[1]);
-        })
+        .attr("y", (dd) => y(dd.value[1]))
         .attr("height", (dd) => y(dd.value[0]) - y(dd.value[1]))
         .attr("width", barWidth)
         .on("mouseleave", () => {
@@ -118,18 +110,17 @@ const drawChart = (
         });
     });
 
-  // Add x-axis
   g.append("g")
     .attr("transform", `translate(0,${innerHeight})`)
     .call(
       d3
         .axisBottom(x)
-        .ticks(d3.timeMonth.every(1)) // one tick per month
+        .ticks(d3.timeMonth.every(1))
+        // @ts-expect-error d3 type error
         .tickFormat(d3.timeFormat("%b")), // short month names
       0,
     );
 
-  // Add y-axis
   g.append("g").call(d3.axisLeft(y));
 };
 
