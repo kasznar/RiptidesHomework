@@ -1,13 +1,12 @@
-import './App.css'
-import {ListUserRepositories} from "./features/RepositoryList/ListUserRepositories.tsx";
-
+import "./App.css";
+import { RepositoryListScreen } from "./features/RepositoryList/RepositoryListScreen.tsx";
 
 function App() {
   return (
     <>
-        <ListUserRepositories />
+      <RepositoryListScreen />
     </>
-  )
+  );
 }
 
-export default App
+export default App;

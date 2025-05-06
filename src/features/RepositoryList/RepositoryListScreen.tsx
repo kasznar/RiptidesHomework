@@ -1,9 +1,11 @@
-import { useQuery, gql, ApolloError } from "@apollo/client";
+import { gql, useQuery } from "@apollo/client";
 import { GetUserReposQuery } from "../../api";
-import { useEffect, useState } from "react";
 import { Input } from "../../shared/ui-kit/Input.tsx";
-import { useDebounce } from "../../shared/useDebounce.ts";
+import { ContributionChart } from "./ContributionChart.tsx";
+import { useEffect, useState } from "react";
 import { URLParams } from "../../shared/URLParams.ts";
+import { useDebounce } from "../../shared/useDebounce.ts";
+import { RepositoryList } from "./RepositoryList.tsx";
 
 const GET_USER_REPOS = gql`
   query GetUserRepos($login: String!) {
@@ -45,40 +47,6 @@ const GET_USER_REPOS = gql`
   }
 `;
 
-interface RepositoryListProps {
-  loading: boolean;
-  error?: ApolloError;
-  data?: GetUserReposQuery;
-}
-
-const RepositoryList = (props: RepositoryListProps) => {
-  const { loading, error, data } = props;
-
-  if (loading) return <p>Loading...</p>;
-  // todo:  alma is a organization, not listed
-  if (data?.user === null) return <p>No user with this username</p>;
-  if (error) return <p>Error : {error.message}</p>;
-  if (data?.user?.repositories.nodes?.length === 0)
-    return <p>User doesn't have any public repositories yet.</p>;
-
-  return (
-    <>
-      {data?.user?.repositories.nodes?.map((repo) => (
-        <div key={repo?.name}>
-          <a href={repo?.url}>Name: {repo?.name}</a>
-          <span>Desc: {repo?.description}</span>
-          <span>Forked?: {String(repo?.isFork)}</span>
-          {/*<span>
-            Last commit date: ${repo?.defaultBranchRef?.target?.history}
-          </span>*/}
-          <span>Issue Count: ${repo?.issues.totalCount}</span>
-          <span>Pull Request count: ${repo?.pullRequests.totalCount}</span>
-        </div>
-      ))}
-    </>
-  );
-};
-
 const URL_PARAM_USER = "user";
 
 const useSearchPhrase = (): [string, (newValue: string) => void] => {
@@ -96,8 +64,7 @@ const useSearchPhrase = (): [string, (newValue: string) => void] => {
   return [user, setUser];
 };
 
-// todo: pagination
-export const ListUserRepositories = () => {
+export const RepositoryListScreen = () => {
   const [user, setUser] = useSearchPhrase();
 
   const query = useQuery<GetUserReposQuery>(GET_USER_REPOS, {
@@ -109,6 +76,7 @@ export const ListUserRepositories = () => {
   return (
     <>
       <Input value={user} onChange={setUser} />
+      <ContributionChart />
       <RepositoryList {...query} />
     </>
   );
