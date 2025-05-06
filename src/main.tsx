@@ -18,6 +18,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
       <ApolloProvider client={client}>
           <App />
-      </ApolloProvider>,
-  </StrictMode>,
+      </ApolloProvider>
+  </StrictMode>
 )
