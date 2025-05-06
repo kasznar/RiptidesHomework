@@ -10,12 +10,23 @@ import { RepositoryList } from "./RepositoryList.tsx";
 const GET_USER_REPOS = gql`
   query GetUserRepos($login: String!) {
     user(login: $login) {
+      contributionsCollection {
+        contributionCalendar {
+          weeks {
+            contributionDays {
+              date
+              contributionCount
+            }
+          }
+        }
+      }
       repositories(
         first: 10
         orderBy: { field: UPDATED_AT, direction: DESC }
         ownerAffiliations: [OWNER]
       ) {
         nodes {
+          id
           name
           description
           url
@@ -49,7 +60,7 @@ const GET_USER_REPOS = gql`
 
 const URL_PARAM_USER = "user";
 
-const useSearchPhrase = (): [string, (newValue: string) => void] => {
+const useSearchPhrase = (): [string, string, (newValue: string) => void] => {
   const [user, setUser] = useState(() => URLParams.get(URL_PARAM_USER) ?? "");
   const debouncedUser = useDebounce(user);
 
@@ -61,22 +72,31 @@ const useSearchPhrase = (): [string, (newValue: string) => void] => {
     }
   }, [debouncedUser]);
 
-  return [user, setUser];
+  return [user, debouncedUser, setUser];
 };
 
 export const RepositoryListScreen = () => {
-  const [user, setUser] = useSearchPhrase();
+  const [user, debouncedUser, setUser] = useSearchPhrase();
 
   const query = useQuery<GetUserReposQuery>(GET_USER_REPOS, {
-    variables: { login: user },
-    skip: !user,
+    variables: { login: debouncedUser },
+    skip: !debouncedUser,
     errorPolicy: "all",
   });
+
+  /*
+  if (query.loading) return <p>Loading...</p>;
+  // todo:  alma is a organization, not listed
+  if (query.data?.user === null) return <p>No user with this username</p>;
+  if (query.error) return <p>Error : {query.error.message}</p>;
+  if (query.data?.user?.repositories.nodes?.length === 0)
+    return <p>User doesn't have any public repositories yet.</p>;
+   */
 
   return (
     <>
       <Input value={user} onChange={setUser} />
-      <ContributionChart />
+      <ContributionChart {...query} />
       <RepositoryList {...query} />
     </>
   );
