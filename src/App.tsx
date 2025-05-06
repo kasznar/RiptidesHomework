@@ -1,4 +1,3 @@
-import "./App.css";
 import { RepositoryListScreen } from "./features/RepositoryList/RepositoryListScreen.tsx";
 
 function App() {

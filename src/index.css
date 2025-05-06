@@ -1,6 +1,24 @@
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  color: rgb(22, 22, 22);
+  color: rgb(62, 67, 78);
   background-color: rgb(247, 245, 242);
   font-size: 16px;
+  min-height: 100vh;
+}
+
+body {
+  margin: 0;
+  margin-left: 20px;
+  margin-right: 20px;
+ /* border-width: 1px;
+  border-left-color: rgb(200, 195, 187);
+  border-left-style: dashed;
+  border-left-width: 0.8px;*/
+  height: 100%;
+  padding: 0px 40px;
+}
+
+* {
+  font-weight: 300;
+  box-sizing: border-box;
 }
