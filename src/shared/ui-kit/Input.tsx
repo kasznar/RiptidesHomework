@@ -20,4 +20,6 @@ const StyledInput = styled.input`
   margin-bottom: 1.5rem;
   line-height: 1.6;
   height: auto;
+  border-radius: 0;
+  border: none;
 `;
