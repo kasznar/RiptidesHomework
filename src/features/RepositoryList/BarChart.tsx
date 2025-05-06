@@ -63,6 +63,8 @@ const drawChart = (
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
+  let timeoutId: NodeJS.Timeout;
+
   g.selectAll(".bar")
     .data(data)
     .enter()
@@ -73,47 +75,59 @@ const drawChart = (
     .attr("width", barWidth)
     .attr("height", (d) => innerHeight - y(d.totalContributions))
     .attr("fill", "steelblue")
-    .on("mouseenter", async (event, d) => {
-      const breakdown = await getBreakDown(d);
+    .attr("cursor", "pointer")
+    .on("click", (event, d) => {
+      clearTimeout(timeoutId);
 
-      const series: Array<{ key: string; value: [number, number] }> = [];
+      timeoutId = setTimeout(async () => {
+        d3.selectAll(".bar").style("opacity", "1");
+        d3.selectAll(".stack").remove();
 
-      let last = 0;
+        const breakdown = await getBreakDown(d);
 
-      for (const breakdownKey in breakdown) {
-        // @ts-expect-error key type
-        const count = breakdown[breakdownKey];
-        const top = count + last;
+        const series: Array<{ key: string; value: [number, number] }> = [];
 
-        series.push({ key: breakdownKey, value: [last, top] });
+        let last = 0;
 
-        last = top;
-      }
+        for (const breakdownKey in breakdown) {
+          // @ts-expect-error key type
+          const count = breakdown[breakdownKey];
+          const top = count + last;
 
-      d3.select(event.target).style("visibility", "hidden");
+          series.push({ key: breakdownKey, value: [last, top] });
 
-      const color = {
-        commits: "#fffe78",
-        issues: "#ff9d42",
-        pullRequests: "#52ff52",
-        pullRequestReviews: "#d34f8c",
-      };
+          last = top;
+        }
 
-      g.selectAll(".stack")
-        .data(series)
-        .enter()
-        .append("rect")
-        .attr("class", "stack")
-        .attr("x", x(d.weekStartDate!) ?? null)
-        // @ts-expect-error key type
-        .attr("fill", (dd) => color[dd.key])
-        .attr("y", (dd) => y(dd.value[1]))
-        .attr("height", (dd) => y(dd.value[0]) - y(dd.value[1]))
-        .attr("width", barWidth)
-        .on("mouseleave", () => {
-          d3.selectAll(".stack").remove();
-          d3.select(event.target).style("visibility", "visible");
-        });
+        d3.select(event.target).style("opacity", "0");
+
+        const color = {
+          commits: "#fffe78",
+          issues: "#ff9d42",
+          pullRequests: "#52ff52",
+          pullRequestReviews: "#d34f8c",
+        };
+
+        g.selectAll(".stack")
+          .data(series)
+          .enter()
+          .append("rect")
+          .attr("class", "stack")
+          .attr("x", x(d.weekStartDate!) ?? null)
+          // @ts-expect-error key type
+          .attr("fill", (dd) => color[dd.key])
+          .attr("y", (dd) => y(dd.value[1]))
+          .attr("height", (dd) => y(dd.value[0]) - y(dd.value[1]))
+          .attr("width", barWidth)
+          .on("mouseleave", () => {
+            d3.selectAll(".stack").remove();
+            d3.select(event.target).style("opacity", "1");
+          });
+      }, 100);
+    })
+    .on("mouseleave", () => {
+      d3.selectAll(".bar").style("opacity", "1");
+      // d3.select(event.target).style("opacity", "1");
     });
 
   g.append("g")
