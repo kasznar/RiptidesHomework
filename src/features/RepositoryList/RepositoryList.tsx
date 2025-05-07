@@ -1,9 +1,12 @@
 import { GetUserReposQuery } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
+import { Button } from "../../shared/ui-kit/Button.tsx";
 
 interface RepositoryListProps {
   data?: GetUserReposQuery;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
 export const RepositoryList = (props: RepositoryListProps) => {
@@ -13,6 +16,7 @@ export const RepositoryList = (props: RepositoryListProps) => {
       <List>
         {props.data?.user?.repositories?.nodes?.map((repo) => (
           <ListItem key={repo?.name}>
+            {/* todo: check fields*/}
             <ListItemHeader>
               <Title href={repo?.url}>{repo?.name}</Title>
               <span>{repo?.description}</span>
@@ -26,9 +30,30 @@ export const RepositoryList = (props: RepositoryListProps) => {
           </ListItem>
         ))}
       </List>
+      <Pagination>
+        <Button
+          onClick={props.onPrevious}
+          disabled={!props.data?.user?.repositories.pageInfo.hasPreviousPage}
+        >
+          Previous
+        </Button>
+        <Button
+          onClick={props.onNext}
+          disabled={!props.data?.user?.repositories.pageInfo.hasNextPage}
+        >
+          Next
+        </Button>
+      </Pagination>
     </>
   );
 };
+
+const Pagination = styled.div`
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  justify-content: center;
+`;
 
 const ListItem = styled.div`
   background-color: white;
