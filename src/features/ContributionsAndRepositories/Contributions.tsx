@@ -11,7 +11,7 @@ import {
   WeeklyContributions,
 } from "./ContributionsChart.tsx";
 
-import { gql } from "@apollo/client";
+import { ApolloQueryResult, gql } from "@apollo/client";
 import { DateUtils } from "../../shared/dateUtils.ts";
 
 const GET_USER_DETAILED_CONTRIBUTIONS = gql`
@@ -68,6 +68,31 @@ const sumYearlyData = (contributions: WeeklyContributions[]) =>
     0,
   );
 
+const getBreakdownFromResponse = (
+  result: ApolloQueryResult<GetUserDetailedContributionsQuery>,
+  weeklyContributions: WeeklyContributions,
+) => {
+  const contributionsCollection = result.data.user?.contributionsCollection;
+
+  const issues = contributionsCollection?.issueContributions.totalCount ?? 0;
+  const pullRequests =
+    contributionsCollection?.pullRequestContributions.totalCount ?? 0;
+  const pullRequestReviews =
+    contributionsCollection?.pullRequestReviewContributions.totalCount ?? 0;
+  const commits =
+    weeklyContributions.totalContributions -
+    pullRequests -
+    pullRequestReviews -
+    issues;
+
+  return {
+    commits,
+    issues,
+    pullRequests,
+    pullRequestReviews,
+  };
+};
+
 export const Contributions = (props: ContributionChartProps) => {
   const data = sumWeeklyData(props.data);
   const yearlySum = sumYearlyData(data);
@@ -89,25 +114,7 @@ export const Contributions = (props: ContributionChartProps) => {
       },
     });
 
-    const contributionsCollection = result.data.user?.contributionsCollection;
-
-    const issues = contributionsCollection?.issueContributions.totalCount ?? 0;
-    const pullRequests =
-      contributionsCollection?.pullRequestContributions.totalCount ?? 0;
-    const pullRequestReviews =
-      contributionsCollection?.pullRequestReviewContributions.totalCount ?? 0;
-    const commits =
-      weeklyContributions.totalContributions -
-      pullRequests -
-      pullRequestReviews -
-      issues;
-
-    return {
-      commits,
-      issues,
-      pullRequests,
-      pullRequestReviews,
-    };
+    return getBreakdownFromResponse(result, weeklyContributions);
   };
 
   return (
