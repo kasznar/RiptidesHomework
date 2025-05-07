@@ -10,7 +10,7 @@ import { Screen } from "../../shared/ui-kit/Screen.tsx";
 import { Contributions } from "./Contributions.tsx";
 import { GetUserContributionsQuery } from "../../api";
 
-const GET_USER_CONTRIBUTIONS = gql`
+export const GET_USER_CONTRIBUTIONS = gql`
   query GetUserContributions($login: String!) {
     user(login: $login) {
       contributionsCollection {
