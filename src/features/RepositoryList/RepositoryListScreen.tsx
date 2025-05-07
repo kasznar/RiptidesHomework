@@ -56,8 +56,8 @@ export const RepositoryListScreen = () => {
   const renderContent = () => {
     if (!user) return <H2>Search for a user</H2>;
     if (query.loading) return <H2>Loading...</H2>;
-    if (query.error) return <H2>Something went wrong</H2>;
     if (query.data?.user === null) return <H2>No user with this username</H2>;
+    if (query.error) return <H2>Something went wrong</H2>;
     if (!query.data || !query.data.user) return null;
 
     const weeks =
@@ -91,7 +91,7 @@ const Header = styled.header`
   align-items: center;
   justify-content: space-between;
   flex-direction: column;
-  padding: 20px;
+  padding: 20px 0;
   gap: 10px;
 
   @media (min-width: 992px) {

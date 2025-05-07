@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Button } from "../../shared/ui-kit/Button.tsx";
 import { gql, useQuery } from "@apollo/client";
 import { useState } from "react";
+import { DateUtils } from "../../shared/dateUtils.ts";
 
 const GET_USER_REPOS = gql`
   query GetUserRepos(
@@ -61,6 +62,10 @@ const GET_USER_REPOS = gql`
   }
 `;
 
+type Repository = NonNullable<
+  NonNullable<NonNullable<GetUserReposQuery["user"]>["repositories"]>["nodes"]
+>[number];
+
 interface RepositoryListProps {
   username: string;
 }
@@ -69,6 +74,15 @@ enum PaginationDirection {
   Forward = "forward",
   Backward = "backward",
 }
+
+const getLastCommitDate = (repo: Repository) => {
+  const date =
+    repo?.defaultBranchRef?.target?.__typename === "Commit"
+      ? repo.defaultBranchRef.target.history.edges?.[0]?.node?.committedDate
+      : null;
+
+  return DateUtils.formatDate(date);
+};
 
 export const RepositoryList = (props: RepositoryListProps) => {
   const [afterCursor, setAfterCursor] = useState<string | null>(null);
@@ -122,15 +136,12 @@ export const RepositoryList = (props: RepositoryListProps) => {
         <List>
           {query.data?.user?.repositories?.nodes?.map((repo) => (
             <ListItem key={repo?.name}>
-              {/* todo: check fields*/}
               <ListItemHeader>
                 <Title href={repo?.url}>{repo?.name}</Title>
                 <span>{repo?.description}</span>
               </ListItemHeader>
               {repo?.isFork ?? <span>forked</span>}
-              {/*<span>
-            Last commit date: ${repo?.defaultBranchRef?.target?.history}
-          </span>*/}
+              <span>Last commit {getLastCommitDate(repo)}</span>
               <span>Issues {repo?.issues.totalCount}</span>
               <span>Pull Requests {repo?.pullRequests.totalCount}</span>
             </ListItem>

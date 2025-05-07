@@ -9,6 +9,7 @@ import { H2 } from "../../shared/ui-kit/Typography.tsx";
 import { BarChart, WeeklyContributions } from "./BarChart.tsx";
 
 import { gql } from "@apollo/client";
+import { DateUtils } from "../../shared/dateUtils.ts";
 
 const GET_USER_DETAILED_CONTRIBUTIONS = gql`
   query GetUserDetailedContributions(
@@ -69,8 +70,9 @@ export const ContributionChart = (props: ContributionChartProps) => {
   const yearlySum = sumYearlyData(data);
 
   const fetchBreakdown = async (weeklyContributions: WeeklyContributions) => {
-    const toEndOfDay = new Date(weeklyContributions.weekEnd);
-    toEndOfDay.setUTCHours(23, 59, 59, 999);
+    const weekEndEndOfDay = DateUtils.toEndOfDay(
+      weeklyContributions.weekEndDate!,
+    );
 
     const result = await client.query<
       GetUserDetailedContributionsQuery,
@@ -79,7 +81,7 @@ export const ContributionChart = (props: ContributionChartProps) => {
       query: GET_USER_DETAILED_CONTRIBUTIONS,
       variables: {
         from: weeklyContributions.weekStartDate,
-        to: toEndOfDay,
+        to: weekEndEndOfDay,
         username: props.username,
       },
     });
