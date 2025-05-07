@@ -29,120 +29,164 @@ interface Vector {
   y: number;
 }
 
-const drawChart = (
-  svgRef: SVGSVGElement,
-  data: WeeklyContributions[],
-  dimensions: Vector,
-  getBreakDown: (
-    weeklyContributions: WeeklyContributions,
-  ) => Promise<Breakdown>,
-) => {
-  d3.select(svgRef).selectAll("*").remove();
+type SVGGroup = d3.Selection<SVGGElement, unknown, null, undefined>;
+type XScale = d3.ScaleTime<number, number>;
+type YScale = d3.ScaleLinear<number, number>;
 
-  const width = dimensions.x;
-  const height = dimensions.y;
-  const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
+class D3Chart {
+  private margin = { top: 20, right: 20, bottom: 30, left: 40 };
+  private x: XScale;
+  private y: YScale;
+  private g: SVGGroup;
+  private timeoutId?: NodeJS.Timeout;
 
-  const barWidth = innerWidth / data.length;
+  constructor(
+    private svgRef: SVGSVGElement,
+    private data: WeeklyContributions[],
+    private dimensions: Vector,
+    private getBreakDown: (
+      weeklyContributions: WeeklyContributions,
+    ) => Promise<Breakdown>,
+  ) {
+    this.clear();
 
-  const x = d3
-    .scaleTime()
-    .domain(d3.extent(data, (d) => d.weekStartDate) as [Date, Date])
-    .range([0, innerWidth]);
+    this.x = this.createXScale();
+    this.y = this.createYScale();
 
-  const y = d3
-    .scaleLinear()
-    .domain([0, d3.max(data.map((i) => i.totalContributions)) as number])
-    .range([innerHeight, 0]);
+    this.g = this.createGroup();
 
-  const svg = d3.select(svgRef).attr("viewBox", [0, 0, width, height]);
+    this.setupBars();
 
-  const g = svg
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    this.drawScales();
+  }
 
-  let timeoutId: NodeJS.Timeout;
+  setupBars() {
+    this.g
+      .selectAll(".bar")
+      .data(this.data)
+      .enter()
+      .append("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => this.x(d.weekStartDate!) ?? null)
+      .attr("y", (d) => this.y(d.totalContributions))
+      .attr("width", this.barWidth)
+      .attr("height", (d) => this.innerHeight - this.y(d.totalContributions))
+      .attr("fill", "steelblue")
+      .attr("cursor", "pointer")
+      .on("click", this.handleClick);
+  }
 
-  g.selectAll(".bar")
-    .data(data)
-    .enter()
-    .append("rect")
-    .attr("class", "bar")
-    .attr("x", (d) => x(d.weekStartDate!) ?? null)
-    .attr("y", (d) => y(d.totalContributions))
-    .attr("width", barWidth)
-    .attr("height", (d) => innerHeight - y(d.totalContributions))
-    .attr("fill", "steelblue")
-    .attr("cursor", "pointer")
-    .on("click", (event, d) => {
-      clearTimeout(timeoutId);
+  handleClick = (_: unknown, d: WeeklyContributions) => {
+    clearTimeout(this.timeoutId);
 
-      timeoutId = setTimeout(async () => {
-        d3.selectAll(".bar").style("opacity", "1");
-        d3.selectAll(".stack").remove();
+    this.timeoutId = setTimeout(async () => {
+      d3.selectAll(".stack").remove();
 
-        const breakdown = await getBreakDown(d);
+      const breakdown = await this.getBreakDown(d);
 
-        const series: Array<{ key: string; value: [number, number] }> = [];
+      const series: Array<{ key: string; value: [number, number] }> = [];
 
-        let last = 0;
+      let last = 0;
 
-        for (const breakdownKey in breakdown) {
-          // @ts-expect-error key type
-          const count = breakdown[breakdownKey];
-          const top = count + last;
+      for (const breakdownKey in breakdown) {
+        // @ts-expect-error key type
+        const count = breakdown[breakdownKey];
+        const top = count + last;
 
-          series.push({ key: breakdownKey, value: [last, top] });
+        series.push({ key: breakdownKey, value: [last, top] });
 
-          last = top;
-        }
+        last = top;
+      }
 
-        d3.select(event.target).style("opacity", "0");
+      const color = {
+        commits: "#fffe78",
+        issues: "#ff9d42",
+        pullRequests: "#52ff52",
+        pullRequestReviews: "#d34f8c",
+      };
 
-        const color = {
-          commits: "#fffe78",
-          issues: "#ff9d42",
-          pullRequests: "#52ff52",
-          pullRequestReviews: "#d34f8c",
-        };
+      this.g
+        .selectAll(".stack")
+        .data(series)
+        .enter()
+        .append("rect")
+        .attr("class", "stack")
+        .attr("x", this.x(d.weekStartDate!) ?? null)
+        // @ts-expect-error key type
+        .attr("fill", (dd) => color[dd.key])
+        .attr("y", (dd) => this.y(dd.value[1]))
+        .attr("height", (dd) => this.y(dd.value[0]) - this.y(dd.value[1]))
+        .attr("width", this.barWidth)
+        .on("mouseleave", () => {
+          d3.selectAll(".stack").remove();
+        });
+    }, 100);
+  };
 
-        g.selectAll(".stack")
-          .data(series)
-          .enter()
-          .append("rect")
-          .attr("class", "stack")
-          .attr("x", x(d.weekStartDate!) ?? null)
-          // @ts-expect-error key type
-          .attr("fill", (dd) => color[dd.key])
-          .attr("y", (dd) => y(dd.value[1]))
-          .attr("height", (dd) => y(dd.value[0]) - y(dd.value[1]))
-          .attr("width", barWidth)
-          .on("mouseleave", () => {
-            d3.selectAll(".stack").remove();
-            d3.select(event.target).style("opacity", "1");
-          });
-      }, 100);
-    })
-    .on("mouseleave", () => {
-      d3.selectAll(".bar").style("opacity", "1");
-      // d3.select(event.target).style("opacity", "1");
-    });
+  createXScale() {
+    return d3
+      .scaleTime()
+      .domain(d3.extent(this.data, (d) => d.weekStartDate) as [Date, Date])
+      .range([0, this.innerWidth]);
+  }
 
-  g.append("g")
-    .attr("transform", `translate(0,${innerHeight})`)
-    .call(
-      d3
-        .axisBottom(x)
-        .ticks(d3.timeMonth.every(1))
-        // @ts-expect-error d3 type error
-        .tickFormat(d3.timeFormat("%b")), // short month names
-      0,
-    );
+  createYScale() {
+    return d3
+      .scaleLinear()
+      .domain([0, d3.max(this.data.map((i) => i.totalContributions)) as number])
+      .range([this.innerHeight, 0]);
+  }
 
-  g.append("g").call(d3.axisLeft(y));
-};
+  drawScales() {
+    this.g
+      .append("g")
+      .attr("transform", `translate(0,${this.innerHeight})`)
+      .call(
+        d3
+          .axisBottom(this.x)
+          .ticks(d3.timeMonth.every(1))
+          // @ts-expect-error d3 type error
+          .tickFormat(d3.timeFormat("%b")), // short month names
+        0,
+      );
+
+    this.g.append("g").call(d3.axisLeft(this.y));
+  }
+
+  createGroup() {
+    const svg = d3
+      .select(this.svgRef)
+      .attr("viewBox", [0, 0, this.width, this.height]);
+
+    return svg
+      .append("g")
+      .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+  }
+
+  clear() {
+    d3.select(this.svgRef).selectAll("*").remove();
+  }
+
+  get width() {
+    return this.dimensions.x;
+  }
+
+  get height() {
+    return this.dimensions.y;
+  }
+
+  get innerWidth() {
+    return this.width - this.margin.left - this.margin.right;
+  }
+
+  get innerHeight() {
+    return this.height - this.margin.top - this.margin.bottom;
+  }
+
+  get barWidth() {
+    return this.innerWidth / this.data.length;
+  }
+}
 
 export function BarChart(props: BarChartProps) {
   const data = props.data.map((d) => ({
@@ -158,7 +202,7 @@ export function BarChart(props: BarChartProps) {
     requestAnimationFrame(() => {
       if (!svgRef.current) return;
       if (!containerRef.current) return;
-      drawChart(
+      new D3Chart(
         svgRef.current!,
         data,
         {
@@ -172,7 +216,7 @@ export function BarChart(props: BarChartProps) {
 
   useLayoutEffect(() => {
     function updateSize() {
-      drawChart(
+      new D3Chart(
         svgRef.current!,
         data,
         {
