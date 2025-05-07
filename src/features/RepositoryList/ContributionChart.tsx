@@ -109,7 +109,7 @@ export const ContributionChart = (props: ContributionChartProps) => {
     <Container>
       {yearlySum === 0 ? (
         <Title>
-          This doesn't have any public contributions for the past year
+          This user doesn't have any public contributions for the past year
         </Title>
       ) : (
         <>

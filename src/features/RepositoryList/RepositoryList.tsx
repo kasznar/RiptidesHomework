@@ -116,23 +116,27 @@ export const RepositoryList = (props: RepositoryListProps) => {
   return (
     <>
       <H2>User's repositories</H2>
-      <List>
-        {query.data?.user?.repositories?.nodes?.map((repo) => (
-          <ListItem key={repo?.name}>
-            {/* todo: check fields*/}
-            <ListItemHeader>
-              <Title href={repo?.url}>{repo?.name}</Title>
-              <span>{repo?.description}</span>
-            </ListItemHeader>
-            {repo?.isFork ?? <span>forked</span>}
-            {/*<span>
+      {query.loading ? (
+        <H2>Loading...</H2>
+      ) : (
+        <List>
+          {query.data?.user?.repositories?.nodes?.map((repo) => (
+            <ListItem key={repo?.name}>
+              {/* todo: check fields*/}
+              <ListItemHeader>
+                <Title href={repo?.url}>{repo?.name}</Title>
+                <span>{repo?.description}</span>
+              </ListItemHeader>
+              {repo?.isFork ?? <span>forked</span>}
+              {/*<span>
             Last commit date: ${repo?.defaultBranchRef?.target?.history}
           </span>*/}
-            <span>Issues {repo?.issues.totalCount}</span>
-            <span>Pull Requests {repo?.pullRequests.totalCount}</span>
-          </ListItem>
-        ))}
-      </List>
+              <span>Issues {repo?.issues.totalCount}</span>
+              <span>Pull Requests {repo?.pullRequests.totalCount}</span>
+            </ListItem>
+          ))}
+        </List>
+      )}
       <Pagination>
         <Button
           onClick={handlePreviousPage}
