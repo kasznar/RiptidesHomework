@@ -1,9 +1,9 @@
-import { RepositoryListScreen } from "./features/RepositoryList/RepositoryListScreen.tsx";
+import { ContributionsAndRepositoriesScreen } from "./features/ContributionsAndRepositories/ContributionsAndRepositoriesScreen.tsx";
 
 function App() {
   return (
     <>
-      <RepositoryListScreen />
+      <ContributionsAndRepositoriesScreen />
     </>
   );
 }

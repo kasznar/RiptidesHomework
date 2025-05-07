@@ -188,7 +188,7 @@ class D3Chart {
   }
 }
 
-export function BarChart(props: BarChartProps) {
+export function ContributionsChart(props: BarChartProps) {
   const data = props.data.map((d) => ({
     ...d,
     weekStartDate: new Date(d.weekStart),

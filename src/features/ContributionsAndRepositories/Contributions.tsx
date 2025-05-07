@@ -6,7 +6,10 @@ import {
   GetUserDetailedContributionsQueryVariables,
 } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
-import { BarChart, WeeklyContributions } from "./BarChart.tsx";
+import {
+  ContributionsChart,
+  WeeklyContributions,
+} from "./ContributionsChart.tsx";
 
 import { gql } from "@apollo/client";
 import { DateUtils } from "../../shared/dateUtils.ts";
@@ -65,7 +68,7 @@ const sumYearlyData = (contributions: WeeklyContributions[]) =>
     0,
   );
 
-export const ContributionChart = (props: ContributionChartProps) => {
+export const Contributions = (props: ContributionChartProps) => {
   const data = sumWeeklyData(props.data);
   const yearlySum = sumYearlyData(data);
 
@@ -117,7 +120,7 @@ export const ContributionChart = (props: ContributionChartProps) => {
         <>
           <Title>Contributions in the last year</Title>
 
-          <BarChart data={data} getBreakDown={fetchBreakdown} />
+          <ContributionsChart data={data} getBreakDown={fetchBreakdown} />
         </>
       )}
     </Container>

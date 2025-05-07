@@ -7,7 +7,7 @@ import { RepositoryList } from "./RepositoryList.tsx";
 import { H1, H2 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
 import { Screen } from "../../shared/ui-kit/Screen.tsx";
-import { ContributionChart } from "./ContributionChart.tsx";
+import { Contributions } from "./Contributions.tsx";
 import { GetUserContributionsQuery } from "../../api";
 
 const GET_USER_CONTRIBUTIONS = gql`
@@ -44,7 +44,7 @@ const useSearchPhrase = (): [string, string, (newValue: string) => void] => {
   return [user, debouncedUser, setUser];
 };
 
-export const RepositoryListScreen = () => {
+export const ContributionsAndRepositoriesScreen = () => {
   const [user, debouncedUser, setUser] = useSearchPhrase();
 
   const query = useQuery<GetUserContributionsQuery>(GET_USER_CONTRIBUTIONS, {
@@ -65,7 +65,7 @@ export const RepositoryListScreen = () => {
 
     return (
       <>
-        <ContributionChart data={weeks} username={user} />
+        <Contributions data={weeks} username={user} />
         <RepositoryList username={debouncedUser} />
       </>
     );
