@@ -2,16 +2,16 @@ import styled from "styled-components";
 import {
   client,
   GetUserContributionsQuery,
-  GetUserContributionsQueryVariables,
-  GetUserReposQuery,
+  GetUserDetailedContributionsQuery,
+  GetUserDetailedContributionsQueryVariables,
 } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
 import { BarChart, WeeklyContributions } from "./BarChart.tsx";
 
 import { gql } from "@apollo/client";
 
-const GET_USER_CONTRIBUTIONS = gql`
-  query GetUserContributions(
+const GET_USER_DETAILED_CONTRIBUTIONS = gql`
+  query GetUserDetailedContributions(
     $username: String!
     $from: DateTime!
     $to: DateTime!
@@ -34,7 +34,7 @@ const GET_USER_CONTRIBUTIONS = gql`
 
 type Week = NonNullable<
   NonNullable<
-    GetUserReposQuery["user"]
+    GetUserContributionsQuery["user"]
   >["contributionsCollection"]["contributionCalendar"]["weeks"]
 >[number];
 
@@ -73,10 +73,10 @@ export const ContributionChart = (props: ContributionChartProps) => {
     toEndOfDay.setUTCHours(23, 59, 59, 999);
 
     const result = await client.query<
-      GetUserContributionsQuery,
-      GetUserContributionsQueryVariables
+      GetUserDetailedContributionsQuery,
+      GetUserDetailedContributionsQueryVariables
     >({
-      query: GET_USER_CONTRIBUTIONS,
+      query: GET_USER_DETAILED_CONTRIBUTIONS,
       variables: {
         from: weeklyContributions.weekStartDate,
         to: toEndOfDay,

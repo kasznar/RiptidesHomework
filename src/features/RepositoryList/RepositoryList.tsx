@@ -2,19 +2,122 @@ import { GetUserReposQuery } from "../../api";
 import { H2 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
 import { Button } from "../../shared/ui-kit/Button.tsx";
+import { gql, useQuery } from "@apollo/client";
+import { useState } from "react";
+
+const GET_USER_REPOS = gql`
+  query GetUserRepos(
+    $login: String!
+    $first: Int
+    $after: String
+    $last: Int
+    $before: String
+  ) {
+    user(login: $login) {
+      repositories(
+        first: $first
+        after: $after
+        last: $last
+        before: $before
+        orderBy: { field: UPDATED_AT, direction: DESC }
+        ownerAffiliations: [OWNER]
+      ) {
+        nodes {
+          id
+          name
+          description
+          url
+          isFork
+          updatedAt
+          stargazerCount
+          issues {
+            totalCount
+          }
+          pullRequests {
+            totalCount
+          }
+          defaultBranchRef {
+            target {
+              ... on Commit {
+                history(first: 1) {
+                  edges {
+                    node {
+                      committedDate
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        pageInfo {
+          startCursor
+          endCursor
+          hasNextPage
+          hasPreviousPage
+        }
+      }
+    }
+  }
+`;
 
 interface RepositoryListProps {
-  data?: GetUserReposQuery;
-  onNext: () => void;
-  onPrevious: () => void;
+  username: string;
+}
+
+enum PaginationDirection {
+  Forward = "forward",
+  Backward = "backward",
 }
 
 export const RepositoryList = (props: RepositoryListProps) => {
+  const [afterCursor, setAfterCursor] = useState<string | null>(null);
+  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
+  const [paginationDirection, setPaginationDirection] =
+    useState<PaginationDirection>(PaginationDirection.Forward);
+
+  const pageSize = 10;
+
+  const paginationVariables =
+    paginationDirection === PaginationDirection.Forward
+      ? { first: pageSize, after: afterCursor, last: null, before: null }
+      : { first: null, after: null, last: pageSize, before: beforeCursor };
+
+  const query = useQuery<GetUserReposQuery>(GET_USER_REPOS, {
+    variables: { login: props.username, ...paginationVariables },
+    errorPolicy: "all",
+  });
+
+  const handleNextPage = () => {
+    if (
+      query.data?.user?.repositories.pageInfo.hasNextPage &&
+      query.data?.user.repositories.pageInfo.endCursor
+    ) {
+      setBeforeCursor(null);
+      setAfterCursor(query.data.user.repositories.pageInfo.endCursor);
+      setPaginationDirection(PaginationDirection.Forward);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (
+      query.data?.user?.repositories.pageInfo.hasPreviousPage &&
+      query.data?.user.repositories.pageInfo.startCursor
+    ) {
+      setAfterCursor(null);
+      setBeforeCursor(query.data.user.repositories.pageInfo.startCursor);
+      setPaginationDirection(PaginationDirection.Backward);
+    }
+  };
+
+  if (query.data?.user?.repositories.nodes?.length === 0)
+    return <H2>User doesn't have any public repositories yet.</H2>;
+
   return (
     <>
       <H2>User's repositories</H2>
       <List>
-        {props.data?.user?.repositories?.nodes?.map((repo) => (
+        {query.data?.user?.repositories?.nodes?.map((repo) => (
           <ListItem key={repo?.name}>
             {/* todo: check fields*/}
             <ListItemHeader>
@@ -32,14 +135,14 @@ export const RepositoryList = (props: RepositoryListProps) => {
       </List>
       <Pagination>
         <Button
-          onClick={props.onPrevious}
-          disabled={!props.data?.user?.repositories.pageInfo.hasPreviousPage}
+          onClick={handlePreviousPage}
+          disabled={!query.data?.user?.repositories.pageInfo.hasPreviousPage}
         >
           Previous
         </Button>
         <Button
-          onClick={props.onNext}
-          disabled={!props.data?.user?.repositories.pageInfo.hasNextPage}
+          onClick={handleNextPage}
+          disabled={!query.data?.user?.repositories.pageInfo.hasNextPage}
         >
           Next
         </Button>
@@ -71,8 +174,19 @@ const ListItemHeader = styled.div`
 
 const List = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
   grid-gap: 20px;
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 992px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 1200px) {
+    grid-template-columns: repeat(5, 1fr);
+  }
 `;
 
 const Title = styled.a`

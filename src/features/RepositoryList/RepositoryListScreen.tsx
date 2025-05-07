@@ -1,5 +1,4 @@
 import { gql, useQuery } from "@apollo/client";
-import { GetUserReposQuery } from "../../api";
 import { Input } from "../../shared/ui-kit/Input.tsx";
 import { useEffect, useState } from "react";
 import { URLParams } from "../../shared/URLParams.ts";
@@ -9,15 +8,10 @@ import { H1, H2 } from "../../shared/ui-kit/Typography.tsx";
 import styled from "styled-components";
 import { Screen } from "../../shared/ui-kit/Screen.tsx";
 import { ContributionChart } from "./ContributionChart.tsx";
+import { GetUserContributionsQuery } from "../../api";
 
-const GET_USER_REPOS = gql`
-  query GetUserRepos(
-    $login: String!
-    $first: Int
-    $after: String
-    $last: Int
-    $before: String
-  ) {
+const GET_USER_CONTRIBUTIONS = gql`
+  query GetUserContributions($login: String!) {
     user(login: $login) {
       contributionsCollection {
         contributionCalendar {
@@ -27,49 +21,6 @@ const GET_USER_REPOS = gql`
               contributionCount
             }
           }
-        }
-      }
-      repositories(
-        first: $first
-        after: $after
-        last: $last
-        before: $before
-        orderBy: { field: UPDATED_AT, direction: DESC }
-        ownerAffiliations: [OWNER]
-      ) {
-        nodes {
-          id
-          name
-          description
-          url
-          isFork
-          updatedAt
-          stargazerCount
-          issues {
-            totalCount
-          }
-          pullRequests {
-            totalCount
-          }
-          defaultBranchRef {
-            target {
-              ... on Commit {
-                history(first: 1) {
-                  edges {
-                    node {
-                      committedDate
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        pageInfo {
-          startCursor
-          endCursor
-          hasNextPage
-          hasPreviousPage
         }
       }
     }
@@ -93,61 +44,20 @@ const useSearchPhrase = (): [string, string, (newValue: string) => void] => {
   return [user, debouncedUser, setUser];
 };
 
-enum PaginationDirection {
-  Forward = "forward",
-  Backward = "backward",
-}
-
 export const RepositoryListScreen = () => {
   const [user, debouncedUser, setUser] = useSearchPhrase();
 
-  const [afterCursor, setAfterCursor] = useState<string | null>(null);
-  const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
-  const [paginationDirection, setPaginationDirection] =
-    useState<PaginationDirection>(PaginationDirection.Forward);
-
-  const pageSize = 10;
-
-  const paginationVariables =
-    paginationDirection === PaginationDirection.Forward
-      ? { first: pageSize, after: afterCursor, last: null, before: null }
-      : { first: null, after: null, last: pageSize, before: beforeCursor };
-
-  const query = useQuery<GetUserReposQuery>(GET_USER_REPOS, {
-    variables: { login: debouncedUser, ...paginationVariables },
+  const query = useQuery<GetUserContributionsQuery>(GET_USER_CONTRIBUTIONS, {
+    variables: { login: debouncedUser },
     skip: !debouncedUser,
     errorPolicy: "all",
   });
-
-  const handleNextPage = () => {
-    if (
-      query.data?.user?.repositories.pageInfo.hasNextPage &&
-      query.data?.user.repositories.pageInfo.endCursor
-    ) {
-      setBeforeCursor(null);
-      setAfterCursor(query.data.user.repositories.pageInfo.endCursor);
-      setPaginationDirection(PaginationDirection.Forward);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (
-      query.data?.user?.repositories.pageInfo.hasPreviousPage &&
-      query.data?.user.repositories.pageInfo.startCursor
-    ) {
-      setAfterCursor(null);
-      setBeforeCursor(query.data.user.repositories.pageInfo.startCursor);
-      setPaginationDirection(PaginationDirection.Backward);
-    }
-  };
 
   const renderContent = () => {
     if (!user) return <H2>Search for a user</H2>;
     if (query.loading) return <H2>Loading...</H2>;
     if (query.error) return <H2>Something went wrong</H2>;
     if (query.data?.user === null) return <H2>No user with this username</H2>;
-    if (query.data?.user?.repositories.nodes?.length === 0)
-      return <H2>User doesn't have any public repositories yet.</H2>;
     if (!query.data || !query.data.user) return null;
 
     const weeks =
@@ -156,11 +66,7 @@ export const RepositoryListScreen = () => {
     return (
       <>
         <ContributionChart data={weeks} username={user} />
-        <RepositoryList
-          onNext={handleNextPage}
-          onPrevious={handlePreviousPage}
-          {...query}
-        />
+        <RepositoryList username={debouncedUser} />
       </>
     );
   };
@@ -168,7 +74,7 @@ export const RepositoryListScreen = () => {
   return (
     <Screen>
       <Header>
-        <H1>GitHub Repositories & Contributions</H1>
+        <Title>GitHub Repositories & Contributions</Title>
         <Input value={user} onChange={setUser} placeholder="Enter username" />
       </Header>
       {renderContent()}
@@ -176,8 +82,19 @@ export const RepositoryListScreen = () => {
   );
 };
 
+const Title = styled(H1)`
+  margin: 0;
+`;
+
 const Header = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-direction: column;
+  padding: 20px;
+  gap: 10px;
+
+  @media (min-width: 992px) {
+    flex-direction: row;
+  }
 `;
